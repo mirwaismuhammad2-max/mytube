@@ -4,19 +4,20 @@ import { Readable } from 'node:stream';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const KEY = process.env.ACCESS_KEY || '';          // optional: protects your server
+const KEY = process.env.ACCESS_KEY || '';
 const PORT = process.env.PORT || 3000;
 const UA = 'com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1 like Mac OS X)';
-const web = path.join(path.dirname(fileURLToPath(import.meta.url)), '..', 'web');
+const web = path.dirname(fileURLToPath(import.meta.url));
 const app = express();
 app.use(express.static(web));
+app.use('/icons', express.static(web));
 
 let ytp; const yt = () => (ytp ??= Innertube.create({ retrieve_player: true }));
 const txt = (x) => (typeof x === 'string' ? x : x?.text ?? '');
 
 function item(n) {
   const id = n.id ?? n.video_id ?? n.content_id;
-  if (!/^[\w-]{11}$/.test(id || '')) return null;           // skips channels/playlists
+  if (!/^[\w-]{11}$/.test(id || '')) return null;
   return {
     id,
     title: txt(n.title) || txt(n.metadata?.title),
@@ -27,7 +28,7 @@ function item(n) {
 }
 const items = (list = []) => list.map(item).filter((v) => v && v.title);
 
-const cache = new Map();                                   // Safari sends many range requests
+const cache = new Map();
 async function getInfo(id) {
   const hit = cache.get(id);
   if (hit && Date.now() - hit.t < 20 * 60e3) return hit.info;
