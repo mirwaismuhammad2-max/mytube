@@ -4,7 +4,7 @@ import { Readable } from 'node:stream';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 
-const KEY = process.env.ACCESS_KEY || '';
+const KEY = process.env.ACCESS_KEY || '';          // optional: protects your server
 const PORT = process.env.PORT || 3000;
 const UA = 'com.google.ios.youtube/19.45.4 (iPhone16,2; U; CPU iOS 18_1 like Mac OS X)';
 const web = path.dirname(fileURLToPath(import.meta.url));
@@ -17,7 +17,7 @@ const txt = (x) => (typeof x === 'string' ? x : x?.text ?? '');
 
 function item(n) {
   const id = n.id ?? n.video_id ?? n.content_id;
-  if (!/^[\w-]{11}$/.test(id || '')) return null;
+  if (!/^[\w-]{11}$/.test(id || '')) return null;           // skips channels/playlists
   return {
     id,
     title: txt(n.title) || txt(n.metadata?.title),
@@ -28,7 +28,7 @@ function item(n) {
 }
 const items = (list = []) => list.map(item).filter((v) => v && v.title);
 
-const cache = new Map();
+const cache = new Map();                                   // Safari sends many range requests
 async function getInfo(id) {
   const hit = cache.get(id);
   if (hit && Date.now() - hit.t < 20 * 60e3) return hit.info;
@@ -43,6 +43,11 @@ async function getInfo(id) {
   throw err || new Error('No playable formats (YouTube may be blocking this server)');
 }
 
+app.use('/api', (req, res, next) => {
+  res.set('Access-Control-Allow-Origin', '*');
+  if (req.method === 'OPTIONS') return res.sendStatus(204);
+  next();
+});
 app.use('/api', (req, res, next) =>
   KEY && req.query.k !== KEY ? res.status(401).json({ error: 'bad key' }) : next());
 

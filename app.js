@@ -2,11 +2,11 @@ const $ = (s) => document.querySelector(s), app = $('#app');
 const LS = { get: (k, d) => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch { return d; } },
              set: (k, v) => localStorage.setItem(k, JSON.stringify(v)) };
 const esc = (s = '') => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
-let key = LS.get('key', '');
-const qs = (p, o = {}) => '/api/' + p + '?' + new URLSearchParams({ ...o, k: key });
+let key = LS.get('key', ''), base = LS.get('base', '');
+const qs = (p, o = {}) => base + '/api/' + p + '?' + new URLSearchParams({ ...o, k: key });
 
 async function api(p, o) {
-  const r = await fetch(qs(p, o));
+  const r = await fetch(qs(p, o)).catch(() => { throw new Error('Cannot reach the server. Tap the gear and check the address.'); });
   if (r.status === 401) {
     const k = prompt('Access key'); if (k === null) throw new Error('Access key needed');
     key = k; LS.set('key', k); return api(p, o);
@@ -65,10 +65,17 @@ async function watch(id) {
   }, { passive: true });
 }
 
+function setup() {
+  app.innerHTML = `<h2>Server</h2><p class="note">Paste your MyTube server address and its access key.</p>
+  <div class="bar"><input id="sb" placeholder="https://example.trycloudflare.com" value="${esc(base)}"></div>
+  <div class="bar"><input id="sk" placeholder="Access key" value="${esc(key)}"></div>
+  <div class="bar"><button id="ss">Save</button></div>`;
+  $('#ss').onclick = () => { base = $('#sb').value.trim().replace(/\/+$/, ''); key = $('#sk').value.trim(); LS.set('base', base); LS.set('key', key); location.hash = '#/'; route(); };
+}
 function route() {
   $('#sug').innerHTML = '';
   const [, p, a] = location.hash.split('/');
-  if (p === 'watch') watch(a); else if (p === 'search') search(decodeURIComponent(a || '')); else home();
+  if (!base || p === 'setup') setup(); else if (p === 'watch') watch(a); else if (p === 'search') search(decodeURIComponent(a || '')); else home();
 }
 addEventListener('hashchange', route);
 $('#sf').onsubmit = (e) => { e.preventDefault(); const q = $('#q').value.trim(); if (q) { $('#q').blur(); location.hash = '#/search/' + encodeURIComponent(q); } };
@@ -81,5 +88,5 @@ let tm; $('#q').oninput = () => {
     } catch {}
   }, 200);
 };
-if ('serviceWorker' in navigator) navigator.serviceWorker.register('/sw.js').catch(() => {});
+if ('serviceWorker' in navigator) navigator.serviceWorker.register('./sw.js').catch(() => {});
 route();

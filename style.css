@@ -18,3 +18,5 @@ h2,h3{margin:12px 12px 4px}h2{font-size:18px}h3{font-size:15px;color:var(--m)}
 .bar button,.bar select{flex:1;padding:9px;border-radius:10px;border:1px solid #2b2f38;background:var(--s);color:var(--t);font-size:15px}
 .note{color:var(--m);padding:16px 12px}
 .err{color:#ff8a80;padding:16px 12px}
+.bar input{flex:1;padding:9px;border-radius:10px;border:1px solid #2b2f38;background:var(--s);color:var(--t);font-size:16px;min-width:0}
+.gear{color:var(--t);text-decoration:none;font-size:24px;padding:0 4px}
