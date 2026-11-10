@@ -13,3 +13,4 @@ Home internet is more reliable than a cloud host: YouTube often blocks datacente
 
 ## If search/playback fails
 cd server && npm install youtubei.js@latest   (YouTube changes often; open /api/health, then the terminal log)
+
